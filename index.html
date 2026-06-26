@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tasbeh Widget</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; min-height:100vh; display:flex; justify-content:center; align-items:flex-start; padding:20px; background:linear-gradient(135deg,#f5f0ff 0%,#ede8ff 50%,#f0f5ff 100%); transition:background 0.5s; }
+.widget { width:340px; border-radius:24px; border:1px solid rgba(155,111,224,0.2); background:rgba(255,255,255,0.88); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); padding:18px; user-select:none; box-shadow:0 8px 40px rgba(124,92,191,0.15),0 2px 8px rgba(124,92,191,0.08); }
+
+/* SPLASH */
+.bismillah-splash { position:fixed; inset:0; background:linear-gradient(135deg,#f5f0ff,#ede8ff); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:999; transition:opacity 0.8s,visibility 0.8s; }
+.bismillah-splash.hide { opacity:0; visibility:hidden; pointer-events:none; }
+.bismillah-logo { font-size:56px; margin-bottom:16px; animation:pulse 2s infinite; }
+.bismillah-arabic { font-family:'Amiri',serif; font-size:32px; color:#6B3FA0; text-align:center; line-height:1.7; margin-bottom:8px; animation:fadeInUp 0.8s ease; }
+.bismillah-uz { font-size:13px; color:#9B6FE0; letter-spacing:0.05em; animation:fadeInUp 0.8s ease 0.2s both; }
+.enter-btn { margin-top:28px; padding:13px 36px; border-radius:50px; border:none; background:linear-gradient(135deg,#9B6FE0,#7C5CBF); color:#fff; font-size:14px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; box-shadow:0 4px 20px rgba(124,92,191,0.4); animation:fadeInUp 0.8s ease 0.4s both; transition:transform 0.15s,box-shadow 0.15s; }
+.enter-btn:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(124,92,191,0.5); }
+.enter-btn:active { transform:scale(0.97); }
+
+/* TOP BAR */
+.top-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid rgba(155,111,224,0.15); }
+.top-bar-left { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.bg-lbl { font-size:10px; color:#9B7ED0; font-weight:500; }
+.swatches { display:flex; gap:3px; }
+.swatch { width:16px; height:16px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:transform 0.12s,border-color 0.12s; }
+.swatch:hover { transform:scale(1.2); }
+.swatch.active { border-color:#7C5CBF; }
+input[type=color] { width:18px; height:18px; border:none; border-radius:50%; padding:0; cursor:pointer; background:none; }
+.theme-toggle { display:flex; align-items:center; gap:5px; background:rgba(155,111,224,0.1); border-radius:20px; padding:4px 10px; cursor:pointer; border:none; font-family:'Inter',sans-serif; font-size:10px; color:#7C5CBF; font-weight:600; transition:background 0.2s; }
+.theme-toggle:hover { background:rgba(155,111,224,0.18); }
+
+.save-indicator { font-size:9px; color:#3B9E6A; text-align:center; margin-bottom:8px; min-height:14px; transition:opacity 0.4s; opacity:0; font-weight:500; }
+.save-indicator.show { opacity:1; }
+
+/* HEADER */
+.header { text-align:center; margin-bottom:12px; }
+.header-title { font-size:13px; font-weight:700; color:#9B6FE0; letter-spacing:3px; text-transform:uppercase; }
+.active-name { font-size:15px; font-weight:700; color:#3D2B6B; margin-top:6px; line-height:1.3; }
+.active-meaning { font-size:11px; color:#9B7ED0; margin-top:3px; font-weight:500; }
+.active-desc { font-size:10px; color:#B09EC0; margin-top:6px; line-height:1.6; font-style:italic; padding:0 8px; }
+
+.canvas-wrap { display:flex; justify-content:center; margin:10px 0; cursor:pointer; }
+
+/* PROGRESS */
+.progress-wrap { margin-bottom:8px; }
+.progress-bg { height:5px; border-radius:10px; background:rgba(155,111,224,0.12); overflow:hidden; }
+.progress-fill { height:100%; border-radius:10px; background:linear-gradient(90deg,#9B6FE0,#D4A017); transition:width 0.3s ease; }
+
+.round-badge { text-align:center; font-size:9px; color:#C4A030; font-weight:700; margin-bottom:8px; letter-spacing:0.08em; text-transform:uppercase; }
+
+/* COUNTER */
+.counter-box { background:linear-gradient(135deg,rgba(155,111,224,0.08),rgba(124,92,191,0.04)); border:1px solid rgba(155,111,224,0.18); border-radius:16px; padding:12px; text-align:center; margin-bottom:10px; }
+.count-big { font-size:44px; font-weight:700; color:#7C5CBF; line-height:1; font-variant-numeric:tabular-nums; transition:color 0.2s; }
+.count-big.flash { color:#D4A017; }
+.count-big.bump { animation:bump 0.15s ease; }
+.count-small { font-size:9px; color:#B09EC0; margin-top:2px; font-weight:500; letter-spacing:0.05em; text-transform:uppercase; }
+
+/* STATS */
+.stats-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px; }
+.stat-box { background:rgba(155,111,224,0.06); border:1px solid rgba(155,111,224,0.12); border-radius:12px; padding:8px 4px; text-align:center; }
+.stat-val { font-size:16px; font-weight:700; color:#7C5CBF; }
+.stat-lbl { font-size:8px; color:#B09EC0; margin-top:2px; font-weight:500; text-transform:uppercase; letter-spacing:0.04em; }
+
+/* BUTTONS */
+.btn-row { display:flex; gap:8px; margin-bottom:10px; }
+.btn-tap { flex:1; padding:13px; border-radius:14px; border:none; background:linear-gradient(135deg,#9B6FE0,#7C5CBF); color:#fff; font-size:14px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; transition:transform 0.1s,box-shadow 0.1s; letter-spacing:1px; box-shadow:0 4px 15px rgba(124,92,191,0.35); position:relative; overflow:hidden; }
+.btn-tap:active { transform:scale(0.96); box-shadow:0 2px 8px rgba(124,92,191,0.3); }
+.btn-tap:hover { box-shadow:0 6px 20px rgba(124,92,191,0.45); }
+.btn-reset { padding:13px 14px; border-radius:14px; border:1px solid rgba(155,111,224,0.2); background:rgba(155,111,224,0.06); color:#9B7ED0; font-size:12px; cursor:pointer; font-family:'Inter',sans-serif; transition:background 0.15s; }
+.btn-reset:hover { background:rgba(200,50,50,0.08); color:#E05050; border-color:rgba(200,50,50,0.2); }
+
+/* GLOBAL STATS */
+.global-stats { background:rgba(155,111,224,0.04); border:1px solid rgba(155,111,224,0.12); border-radius:14px; padding:10px 12px; margin-bottom:10px; }
+.gs-title { font-size:9px; color:#B09EC0; text-transform:uppercase; letter-spacing:0.08em; font-weight:700; margin-bottom:8px; }
+.gs-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid rgba(155,111,224,0.07); }
+.gs-row:last-child { border-bottom:none; }
+.gs-name { font-size:10px; color:#7C5CBF; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-right:8px; font-weight:500; }
+.gs-val { font-size:11px; font-weight:700; color:#6B3FA0; min-width:30px; text-align:right; }
+.gs-bar-wrap { width:55px; height:3px; background:rgba(155,111,224,0.12); border-radius:2px; margin-left:6px; }
+.gs-bar { height:3px; background:linear-gradient(90deg,#9B6FE0,#C0A0FF); border-radius:2px; transition:width 0.4s; }
+.gs-empty { font-size:10px; color:#C0B0D8; text-align:center; padding:6px 0; }
+
+/* LIB */
+.lib-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.lib-lbl { font-size:9px; color:#B09EC0; letter-spacing:0.08em; text-transform:uppercase; font-weight:700; }
+.lib-tools { display:flex; gap:4px; }
+.lib-btn { padding:3px 9px; border-radius:6px; border:1px solid rgba(155,111,224,0.2); background:transparent; font-size:9px; color:#9B7ED0; cursor:pointer; font-family:'Inter',sans-serif; font-weight:500; transition:background 0.15s; }
+.lib-btn:hover { background:rgba(155,111,224,0.1); }
+.search-box { width:100%; padding:7px 10px; border-radius:10px; border:1px solid rgba(155,111,224,0.2); background:rgba(155,111,224,0.04); color:#3D2B6B; font-size:11px; font-family:'Inter',sans-serif; outline:none; margin-bottom:6px; transition:border-color 0.2s; }
+.search-box::placeholder { color:#C0B0D8; }
+.search-box:focus { border-color:#9B6FE0; }
+.zikir-list { max-height:170px; overflow-y:auto; border:1px solid rgba(155,111,224,0.12); border-radius:12px; margin-bottom:8px; }
+.zikir-list::-webkit-scrollbar { width:3px; }
+.zikir-list::-webkit-scrollbar-thumb { background:#9B6FE055; border-radius:3px; }
+.zitem { display:flex; align-items:center; padding:8px 10px; border-bottom:1px solid rgba(155,111,224,0.08); cursor:pointer; gap:8px; transition:background 0.1s; }
+.zitem:last-child { border-bottom:none; }
+.zitem:hover { background:rgba(155,111,224,0.06); }
+.zitem.active { background:rgba(124,92,191,0.1); }
+.zitem-num { font-size:10px; min-width:14px; text-align:right; color:#C0B0D8; font-weight:500; }
+.zitem-info { flex:1; min-width:0; }
+.zitem-name { font-size:12px; font-weight:600; color:#7C5CBF; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.zitem.active .zitem-name { color:#4B2B8B; }
+.zitem-meaning { font-size:10px; color:#B09EC0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.zitem-cnt { font-size:10px; color:#9B6FE0; font-weight:700; min-width:22px; text-align:right; }
+.zitem-del { padding:2px 5px; border-radius:4px; border:none; background:transparent; cursor:pointer; font-size:12px; color:#C0B0D8; line-height:1; }
+.zitem-del:hover { background:rgba(200,50,50,0.12); color:#E05050; }
+.no-results { padding:16px; text-align:center; font-size:11px; color:#C0B0D8; }
+
+/* ADD */
+.add-section { border-top:1px solid rgba(155,111,224,0.12); padding-top:10px; }
+.add-lbl { font-size:9px; color:#B09EC0; letter-spacing:0.08em; text-transform:uppercase; font-weight:700; margin-bottom:6px; }
+.add-input { width:100%; padding:7px 10px; border-radius:10px; border:1px solid rgba(155,111,224,0.2); background:rgba(155,111,224,0.04); color:#3D2B6B; font-size:11px; font-family:'Inter',sans-serif; outline:none; margin-bottom:5px; }
+.add-input::placeholder { color:#C0B0D8; }
+.add-input:focus { border-color:#9B6FE0; }
+.add-textarea { width:100%; padding:7px 10px; border-radius:10px; border:1px solid rgba(155,111,224,0.2); background:rgba(155,111,224,0.04); color:#3D2B6B; font-size:11px; font-family:'Inter',sans-serif; outline:none; resize:vertical; min-height:55px; margin-bottom:5px; }
+.add-textarea:focus { border-color:#9B6FE0; }
+.add-footer { display:flex; align-items:center; gap:6px; }
+.add-btn { padding:7px 16px; border-radius:10px; border:none; background:linear-gradient(135deg,#9B6FE0,#7C5CBF); color:#fff; font-size:11px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; }
+.add-btn:active { opacity:0.85; }
+.err-msg { flex:1; font-size:10px; color:#E05050; min-height:14px; }
+.reset-all-wrap { text-align:center; margin-top:10px; }
+.reset-all-btn { font-size:9px; color:#C0B0D8; background:transparent; border:none; cursor:pointer; text-decoration:underline; font-family:'Inter',sans-serif; }
+.reset-all-btn:hover { color:#E05050; }
+
+/* RIPPLE */
+.ripple { position:absolute; border-radius:50%; background:rgba(255,255,255,0.4); transform:scale(0); animation:ripple 0.5s ease-out forwards; pointer-events:none; }
+
+/* DARK */
+body.dark { background:linear-gradient(135deg,#0f0020,#0a001a,#000815); }
+body.dark .widget { background:rgba(20,8,50,0.92); border-color:rgba(155,111,224,0.25); box-shadow:0 8px 40px rgba(0,0,0,0.5); }
+body.dark .bismillah-splash { background:linear-gradient(135deg,#0f0020,#0a001a); }
+body.dark .bismillah-arabic { color:#C0A0FF; }
+body.dark .bismillah-uz { color:#9B6FE0; }
+body.dark .header-title { color:#C0A0FF; }
+body.dark .active-name { color:#E8D8FF; }
+body.dark .active-meaning { color:#7060AA; }
+body.dark .active-desc { color:#5A4A90; }
+body.dark .count-big { color:#9B6FE0; }
+body.dark .count-small,.dark .stat-lbl,.dark .gs-title,.dark .lib-lbl { color:#7060AA; }
+body.dark .stat-val { color:#9B6FE0; }
+body.dark .stat-box { background:rgba(25,10,55,0.65); border-color:rgba(155,111,224,0.2); }
+body.dark .counter-box { background:rgba(30,10,70,0.65); border-color:rgba(155,111,224,0.25); }
+body.dark .global-stats { background:rgba(15,5,40,0.7); border-color:rgba(155,111,224,0.2); }
+body.dark .gs-name { color:#A090CC; }
+body.dark .gs-val { color:#9B6FE0; }
+body.dark .search-box { background:rgba(30,10,60,0.6); color:#E8D8FF; border-color:rgba(155,111,224,0.25); }
+body.dark .search-box::placeholder { color:#5040A0; }
+body.dark .zitem-name { color:#C0A0FF; }
+body.dark .zitem.active .zitem-name { color:#E8D8FF; }
+body.dark .zitem-meaning { color:#7060AA; }
+body.dark .add-input,.dark .add-textarea { background:rgba(30,10,60,0.6); color:#E8D8FF; border-color:rgba(155,111,224,0.25); }
+body.dark .btn-reset { background:rgba(30,10,60,0.5); color:#8070AA; border-color:rgba(155,111,224,0.2); }
+body.dark .bg-lbl { color:#7060AA; }
+body.dark .top-bar { border-color:rgba(155,111,224,0.15); }
+body.dark .theme-toggle { background:rgba(155,111,224,0.15); color:#C0A0FF; }
+body.dark .zikir-list { border-color:rgba(155,111,224,0.15); }
+body.dark .add-section { border-color:rgba(155,111,224,0.15); }
+body.dark .lib-btn { color:#9070CC; }
+body.dark .round-badge { color:#D4A017; }
+
+@keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+@keyframes bump { 0%{transform:scale(1)} 50%{transform:scale(1.1)} 100%{transform:scale(1)} }
+@keyframes ripple { 0%{transform:scale(0);opacity:0.6} 100%{transform:scale(4);opacity:0} }
+</style>
+</head>
+<body>
+
+<div class="bismillah-splash" id="bismillahSplash">
+  <div class="bismillah-logo">📿</div>
+  <div class="bismillah-arabic">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+  <div class="bismillah-uz">Bismillahir Rohmanir Rohiym</div>
+  <button class="enter-btn" id="enterBtn">Boshlash ›</button>
+</div>
+
+<div class="widget" id="widget">
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <span class="bg-lbl">Fon:</span>
+      <div class="swatches" id="swatches"></div>
+      <input type="color" id="customColor" value="#f5f0ff">
+    </div>
+    <button class="theme-toggle" id="themeToggle">🌙 Tungi</button>
+  </div>
+  <div class="save-indicator" id="saveIndicator">✓ Saqlandi</div>
+  <div class="header">
+    <div class="header-title">☪ TASBEH</div>
+    <div class="active-name" id="activeName">SubhanAllah</div>
+    <div class="active-meaning" id="activeMeaning">Alloh pokdir</div>
+    <div class="active-desc" id="activeDesc"></div>
+  </div>
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="tasbehCanvas" width="240" height="240"></canvas>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bg"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+  <div class="round-badge" id="roundBadge">✦ 1-tur · 33 ta munchoq ✦</div>
+  <div class="counter-box">
+    <div class="count-big" id="countNum">0</div>
+    <div class="count-small">Hozirgi zikir</div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-val" id="totalAll">0</div><div class="stat-lbl">Jami</div></div>
+    <div class="stat-box"><div class="stat-val" id="totalRounds">0</div><div class="stat-lbl">Turlar</div></div>
+    <div class="stat-box"><div class="stat-val" id="total99" style="color:#D4A017">0/99</div><div class="stat-lbl">99 gacha</div></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-tap" id="btnTap">+ BOSING</button>
+    <button class="btn-reset" id="btnReset">↺ Tozalash</button>
+  </div>
+  <div class="global-stats">
+    <div class="gs-title">Jami statistika (barcha vaqt)</div>
+    <div id="globalStatsList"></div>
+  </div>
+  <div class="lib-header">
+    <span class="lib-lbl">Zikirlar (<span id="libCount">9</span>)</span>
+    <div class="lib-tools">
+      <button class="lib-btn" id="sortBtn">A-Z</button>
+      <button class="lib-btn" id="sortCntBtn">Ko'p</button>
+    </div>
+  </div>
+  <input class="search-box" id="searchBox" placeholder="🔍 Qidirish...">
+  <div class="zikir-list" id="zikirListEl"></div>
+  <div class="add-section">
+    <div class="add-lbl">Yangi zikir qo'shish</div>
+    <input class="add-input" id="newName" placeholder="Zikir nomi *" maxlength="500">
+    <input class="add-input" id="newMeaning" placeholder="Qisqa ma'nosi" maxlength="500">
+    <textarea class="add-textarea" id="newDesc" placeholder="Batafsil izoh (Ctrl+Enter = saqlash)" maxlength="1000"></textarea>
+    <div class="add-footer">
+      <div class="err-msg" id="errMsg"></div>
+      <button class="add-btn" id="addBtn">+ Qo'shish</button>
+    </div>
+  </div>
+  <div class="reset-all-wrap">
+    <button class="reset-all-btn" id="resetAllBtn">Barcha statistikani tozalash</button>
+  </div>
+</div>
+
+<script>
+const BEADS=33;
+const canvas=document.getElementById('tasbehCanvas');
+const ctx=canvas.getContext('2d');
+const CX=120,CY=120,R=96;
+const LS_KEY='tasbeh_v4';
+let isDark=false;
+
+// Splash
+document.getElementById('enterBtn').addEventListener('click',()=>{
+  document.getElementById('bismillahSplash').classList.add('hide');
+});
+
+// Dark mode
+document.getElementById('themeToggle').addEventListener('click',()=>{
+  isDark=!isDark;
+  document.body.classList.toggle('dark',isDark);
+  document.getElementById('themeToggle').textContent=isDark?'☀️ Kunduz':'🌙 Tungi';
+  drawTasbeh(); scheduleSave();
+});
+
+// Save/Load
+function saveAll(){
+  localStorage.setItem(LS_KEY,JSON.stringify({zikirList,activeIdx,count,totalAll,rounds,bgColor,isDark}));
+  showSaved();
+}
+function loadAll(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(!raw) return false;
+    const d=JSON.parse(raw);
+    if(d.zikirList&&d.zikirList.length){zikirList=d.zikirList;zikirList.forEach(z=>{if(z.totalCnt===undefined)z.totalCnt=z.cnt||0;});}
+    if(d.activeIdx!==undefined&&d.activeIdx<zikirList.length) activeIdx=d.activeIdx;
+    if(d.count!==undefined) count=d.count;
+    if(d.totalAll!==undefined) totalAll=d.totalAll;
+    if(d.rounds!==undefined) rounds=d.rounds;
+    if(d.bgColor) bgColor=d.bgColor;
+    if(d.isDark){isDark=true;document.body.classList.add('dark');document.getElementById('themeToggle').textContent='☀️ Kunduz';}
+    return true;
+  }catch(e){return false;}
+}
+let saveTimer=null;
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveAll,400);}
+let saveIndTimer=null;
+function showSaved(){const el=document.getElementById('saveIndicator');el.classList.add('show');clearTimeout(saveIndTimer);saveIndTimer=setTimeout(()=>el.classList.remove('show'),1500);}
+
+// BG
+const BG_PRESETS=['#f5f0ff','#f0fff5','#fff8f0','#f0f5ff','#fffdf0','#0f0020','#001020'];
+let bgColor='#f5f0ff';
+function applyBg(save=true){document.body.style.background=bgColor;if(save)scheduleSave();}
+const swatchEl=document.getElementById('swatches');
+BG_PRESETS.forEach((c,i)=>{
+  const s=document.createElement('div');
+  s.className='swatch';s.style.background=c;s.style.border='1px solid rgba(0,0,0,0.08)';
+  s.addEventListener('click',()=>{document.querySelectorAll('.swatch').forEach(x=>x.classList.remove('active'));s.classList.add('active');bgColor=c;document.getElementById('customColor').value=c;applyBg();});
+  swatchEl.appendChild(s);
+});
+document.getElementById('customColor').addEventListener('input',e=>{document.querySelectorAll('.swatch').forEach(x=>x.classList.remove('active'));bgColor=e.target.value;applyBg();});
+function syncSwatches(){document.querySelectorAll('.swatch').forEach((s,i)=>{s.classList.toggle('active',BG_PRESETS[i]===bgColor);});document.getElementById('customColor').value=bgColor;}
+
+// Data
+let zikirList=[
+  {name:'SubhanAllah',meaning:'Alloh pokdir',desc:"Namozdan keyin 33 marta aytiladi. Alloh hamma kamchilik va nuqsonlardan pokdir.",cnt:0,totalCnt:0},
+  {name:'Alhamdulillah',meaning:"Allohga hamd bo'lsin",desc:"Namozdan keyin 33 marta aytiladi. Allohga shukrona bildirishning eng go'zal usuli.",cnt:0,totalCnt:0},
+  {name:'Allahu Akbar',meaning:'Alloh buyukdir',desc:"Namozdan keyin 33 marta aytiladi. Allohning buyukligi va azamatini tan olish.",cnt:0,totalCnt:0},
+  {name:'La ilaha illallah',meaning:"Allohdan o'zga iloh yo'q",desc:"Kalima tayyiba. Islomning asosiy e'tiqodini ifodalovchi eng muqaddas zikr.",cnt:0,totalCnt:0},
+  {name:'Astaghfirullah',meaning:"Allohdan mag'firat so'rayman",desc:"Gunohlar uchun kechirim so'rash. Kuniga 100 marta aytish tavsiya etiladi.",cnt:0,totalCnt:0},
+  {name:'Allahuma salli ala Muhammad',meaning:"Payg'ambarga salavot",desc:"Payg'ambar s.a.v. ga salavot. Har bir salavot uchun 10 marta rahmat yog'iladi.",cnt:0,totalCnt:0},
+  {name:'La hawla wala quwwata illa billah',meaning:"Kuch faqat Allohdadir",desc:"Jannat xazinalaridan biri. Qiyinchilikda va og'ir paytlarda aytiladi.",cnt:0,totalCnt:0},
+  {name:'Laa ilaaha illallaahu Malikul Haqqul Mubiin',meaning:"Ilohliği ochiq, ravshan bo'lgan, yagona Alloh",desc:"Faqrlikdan omonda va qabr zulmatidan xotirjamlikda bo'ladi. Bu kalima bilan boylikni jalb qilib, jannat eshigini taqqillatgan bo'ladi.",cnt:0,totalCnt:0},
+  {name:'Ya Maalikul Mulk',meaning:"Ey mulklar egasi",desc:"Allohning Al-Malik ismi bilan murojaat. Mulk va rizqni faqat Alloh beradi va tortib oladi. Qiyin ishlarda va rizq uchun ko'p aytiladi.",cnt:0,totalCnt:0},
+];
+let activeIdx=0,count=0,totalAll=0,rounds=0;
+let animBead=-1,animProgress=0,animFrame=null;
+let sortMode='none',searchQ='';
+
+function renderList(){
+  let list=zikirList.map((z,i)=>({...z,_i:i}));
+  if(searchQ) list=list.filter(z=>z.name.toLowerCase().includes(searchQ.toLowerCase())||z.meaning.toLowerCase().includes(searchQ.toLowerCase()));
+  if(sortMode==='az') list=[...list].sort((a,b)=>a.name.localeCompare(b.name));
+  else if(sortMode==='cnt') list=[...list].sort((a,b)=>(b.totalCnt||0)-(a.totalCnt||0));
+  const el=document.getElementById('zikirListEl');
+  el.innerHTML='';
+  if(!list.length){el.innerHTML='<div class="no-results">Topilmadi</div>';return;}
+  list.forEach(z=>{
+    const row=document.createElement('div');
+    row.className='zitem'+(z._i===activeIdx?' active':'');
+    row.innerHTML=`<span class="zitem-num">${z._i+1}</span><div class="zitem-info"><div class="zitem-name">${z.name}</div><div class="zitem-meaning">${z.meaning}</div></div><span class="zitem-cnt">${z.totalCnt||0}</span><button class="zitem-del" data-idx="${z._i}">✕</button>`;
+    row.querySelector('.zitem-del').addEventListener('click',e=>{e.stopPropagation();if(zikirList.length<=1)return;zikirList.splice(z._i,1);if(activeIdx>=zikirList.length)activeIdx=zikirList.length-1;selectZikir(activeIdx);});
+    row.addEventListener('click',()=>selectZikir(z._i));
+    el.appendChild(row);
+  });
+  document.getElementById('libCount').textContent=zikirList.length;
+}
+
+function renderGlobalStats(){
+  const el=document.getElementById('globalStatsList');
+  const sorted=[...zikirList].filter(z=>(z.totalCnt||0)>0).sort((a,b)=>(b.totalCnt||0)-(a.totalCnt||0));
+  if(!sorted.length){el.innerHTML='<div class="gs-empty">Hali zikr aytilmagan</div>';return;}
+  const max=sorted[0].totalCnt||1;
+  el.innerHTML=sorted.map(z=>`<div class="gs-row"><span class="gs-name">${z.name}</span><span class="gs-val">${z.totalCnt||0}</span><div class="gs-bar-wrap"><div class="gs-bar" style="width:${Math.round(((z.totalCnt||0)/max)*100)}%"></div></div></div>`).join('');
+}
+
+function selectZikir(idx,resetCounts=true){
+  activeIdx=idx;
+  if(resetCounts){count=0;totalAll=0;rounds=0;}
+  const z=zikirList[idx];
+  document.getElementById('activeName').textContent=z.name;
+  document.getElementById('activeMeaning').textContent=z.meaning;
+  document.getElementById('activeDesc').textContent=z.desc||'';
+  renderList();renderGlobalStats();updateUI();drawTasbeh();scheduleSave();
+}
+
+// Canvas
+function getBeadPos(i){const a=(i/BEADS)*Math.PI*2-Math.PI/2;return{x:CX+R*Math.cos(a),y:CY+R*Math.sin(a)};}
+function drawTasbeh(){
+  ctx.clearRect(0,0,240,240);
+  ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);
+  ctx.strokeStyle=isDark?'rgba(139,115,85,0.4)':'rgba(180,150,100,0.35)';
+  ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+  for(let i=0;i<BEADS;i++){
+    const p=getBeadPos(i);
+    const done=i<count,isAnim=i===animBead;
+    let rad=8;if(isAnim)rad=8+3*Math.sin(animProgress*Math.PI);
+    if(!isDark){ctx.beginPath();ctx.arc(p.x+1,p.y+2,rad,0,Math.PI*2);ctx.fillStyle='rgba(124,92,191,0.12)';ctx.fill();}
+    ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);
+    if(isAnim){const g=ctx.createRadialGradient(p.x-2,p.y-2,1,p.x,p.y,rad);g.addColorStop(0,'#FFD700');g.addColorStop(1,'#C8860A');ctx.fillStyle=g;}
+    else if(done){const g=ctx.createRadialGradient(p.x-2,p.y-2,1,p.x,p.y,rad);g.addColorStop(0,isDark?'#D0C0FF':'#C0A0FF');g.addColorStop(1,isDark?'#8060C0':'#9B6FE0');ctx.fillStyle=g;}
+    else{const g=ctx.createRadialGradient(p.x-2,p.y-2,1,p.x,p.y,rad);g.addColorStop(0,isDark?'#9B7FD0':'#B090E0');g.addColorStop(1,isDark?'#5A3D9F':'#7C5CBF');ctx.fillStyle=g;}
+    ctx.fill();
+    ctx.strokeStyle=isAnim?'#A07808':(done?(isDark?'#9B6FE0':'#8060C0'):(isDark?'#4A2D8F':'#6B4BAF'));
+    ctx.lineWidth=1;ctx.stroke();
+    ctx.beginPath();ctx.arc(p.x-2,p.y-2,2,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.4)';ctx.fill();
+  }
+  const gg=ctx.createRadialGradient(CX-3,CY-R-8,1,CX,CY-R-5,11);
+  gg.addColorStop(0,'#FFE040');gg.addColorStop(1,'#C8860A');
+  ctx.beginPath();ctx.arc(CX,CY-R-5,11,0,Math.PI*2);ctx.fillStyle=gg;ctx.fill();
+  ctx.strokeStyle='#A07808';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.beginPath();ctx.arc(CX-3,CY-R-8,3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fill();
+  ctx.beginPath();ctx.moveTo(CX,CY-R-16);ctx.lineTo(CX,CY-R+6);
+  ctx.strokeStyle=isDark?'#8B7355':'#A0855A';ctx.lineWidth=2;ctx.stroke();
+  ctx.font='700 14px Inter,sans-serif';
+  ctx.fillStyle=isDark?'#C0A0FF':'#7C5CBF';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(count+'/'+BEADS,CX,CY);
+}
+
+function animateBead(idx){
+  if(animFrame)cancelAnimationFrame(animFrame);
+  animBead=idx;animProgress=0;
+  const start=performance.now();
+  function step(now){animProgress=Math.min((now-start)/250,1);drawTasbeh();if(animProgress<1)animFrame=requestAnimationFrame(step);else{animBead=-1;drawTasbeh();}}
+  animFrame=requestAnimationFrame(step);
+}
+
+function updateUI(){
+  document.getElementById('countNum').textContent=count;
+  document.getElementById('totalAll').textContent=totalAll;
+  document.getElementById('totalRounds').textContent=rounds;
+  document.getElementById('total99').textContent=Math.min(totalAll,99)+'/99';
+  document.getElementById('roundBadge').textContent='✦ '+(rounds+1)+'-tur · 33 ta munchoq ✦';
+  document.getElementById('progressFill').style.width=(count/BEADS*100)+'%';
+}
+
+// Ripple
+function addRipple(btn,e){
+  const r=document.createElement('span');
+  r.className='ripple';
+  const rect=btn.getBoundingClientRect();
+  const size=Math.max(btn.offsetWidth,btn.offsetHeight);
+  r.style.width=r.style.height=size+'px';
+  r.style.left=(e.clientX-rect.left-size/2)+'px';
+  r.style.top=(e.clientY-rect.top-size/2)+'px';
+  btn.appendChild(r);
+  setTimeout(()=>r.remove(),500);
+}
+
+// Events
+document.getElementById('btnTap').addEventListener('click',function(e){
+  addRipple(this,e);
+  const prev=count;count++;totalAll++;
+  zikirList[activeIdx].totalCnt=(zikirList[activeIdx].totalCnt||0)+1;
+  const el=document.getElementById('countNum');
+  el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');
+  animateBead(prev);
+  if(count>=BEADS){rounds++;count=0;el.classList.add('flash');el.textContent='✓';setTimeout(()=>{el.classList.remove('flash','bump');updateUI();drawTasbeh();renderList();renderGlobalStats();},700);}
+  else{updateUI();renderList();renderGlobalStats();}
+  scheduleSave();
+});
+document.getElementById('btnReset').addEventListener('click',()=>{count=0;totalAll=0;rounds=0;updateUI();drawTasbeh();scheduleSave();});
+document.getElementById('canvasWrap').addEventListener('click',()=>document.getElementById('btnTap').click());
+document.getElementById('resetAllBtn').addEventListener('click',()=>{
+  if(!confirm('Barcha statistikani tozalashni xohlaysizmi?'))return;
+  zikirList.forEach(z=>{z.totalCnt=0;});count=0;totalAll=0;rounds=0;
+  updateUI();drawTasbeh();renderList();renderGlobalStats();scheduleSave();
+});
+document.getElementById('sortBtn').addEventListener('click',()=>{sortMode=sortMode==='az'?'none':'az';document.getElementById('sortBtn').textContent=sortMode==='az'?'Tartib':'A-Z';if(sortMode==='az')document.getElementById('sortCntBtn').textContent="Ko'p";renderList();});
+document.getElementById('sortCntBtn').addEventListener('click',()=>{sortMode=sortMode==='cnt'?'none':'cnt';document.getElementById('sortCntBtn').textContent=sortMode==='cnt'?'Tartib':"Ko'p";if(sortMode==='cnt')document.getElementById('sortBtn').textContent='A-Z';renderList();});
+document.getElementById('searchBox').addEventListener('input',e=>{searchQ=e.target.value;renderList();});
+document.getElementById('addBtn').addEventListener('click',()=>{
+  const name=document.getElementById('newName').value.trim();
+  const meaning=document.getElementById('newMeaning').value.trim();
+  const desc=document.getElementById('newDesc').value.trim();
+  const err=document.getElementById('errMsg');err.textContent='';
+  if(!name){err.textContent='Zikir nomini kiriting.';return;}
+  if(zikirList.find(z=>z.name.toLowerCase()===name.toLowerCase())){err.textContent='Bu zikir allaqachon bor.';return;}
+  zikirList.push({name,meaning:meaning||'—',desc:desc||'',cnt:0,totalCnt:0});
+  document.getElementById('newName').value='';document.getElementById('newMeaning').value='';document.getElementById('newDesc').value='';
+  selectZikir(zikirList.length-1,false);
+});
+['newName','newMeaning'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('addBtn').click();}));
+document.getElementById('newDesc').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)document.getElementById('addBtn').click();});
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){e.preventDefault();document.getElementById('btnTap').click();}});
+
+// Init
+const loaded=loadAll();
+applyBg(false);syncSwatches();
+const z=zikirList[activeIdx];
+document.getElementById('activeName').textContent=z.name;
+document.getElementById('activeMeaning').textContent=z.meaning;
+document.getElementById('activeDesc').textContent=z.desc||'';
+renderList();renderGlobalStats();drawTasbeh();updateUI();
+if(loaded)showSaved();
+</script>
+</body>
+</html>
